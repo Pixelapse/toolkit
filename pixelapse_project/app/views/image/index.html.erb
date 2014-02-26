@@ -1,0 +1,154 @@
+<%= stylesheet_link_tag "image.css" %>
+<%= javascript_include_tag "image.js" %>
+
+<form>
+	Tool:
+	<input name="tools" type="radio" value="None" id="noneRadio" checked> None
+	<input name="tools" type="radio" value="Color" id="colorRadio"> Color Picker
+	<input name="tools" type="radio" value="Scope" id="scopeRadio"> Dimensions Scope
+	<input name="tools" type="radio" value="Scope" id="magRadio"> Magnifier
+</form>
+<div id="inputFrame">
+	<div id="colorStatus">
+		<div class="colorBox" id="colorPickerBox"></div>
+		<span id="curColor"></span>
+	</div>
+	<div class="scopeBox" id="scopeStatus"></div>
+	<div class="scopeBox" id="scopeBoxStatus"></div>
+
+	<div class="inputImage">
+		<!--<img src="<%= "/images/" + @image.file_name %>" id="centerImage">-->
+		<canvas id="canvas" width = "800px" height="600px">
+		
+		</canvas>
+	</div>
+</div>
+<div id="savedColors">
+	<h1>Saved Colors</h1>
+	<ul class="colorList">
+	</ul>
+</div>
+
+<script>
+// radio button state change code
+$("#noneRadio").click(function(){
+	$("#colorStatus").hide();
+	$("#scopeStatus").hide();
+	$('#scopeBoxStatus').hide();
+	$("#inputFrame").css('cursor','default');
+	var c = document.getElementById('canvas').getContext('2d');
+	redraw(c,img);
+});
+$("#colorRadio").click(function(){
+	$("#colorStatus").hide();
+	$("#scopeStatus").hide();
+	$('#scopeBoxStatus').hide();
+	$("#inputFrame").css('cursor','none');
+	var c = document.getElementById('canvas').getContext('2d');
+	redraw(c,img);
+});
+$("#scopeRadio").click(function(){
+	$("#colorStatus").hide();
+	$("#scopeStatus").hide();
+	$('#scopeBoxStatus').hide();
+	$("#inputFrame").css('cursor','none');
+	var c = document.getElementById('canvas').getContext('2d');
+	redraw(c,img);
+});
+$("#magRadio").click(function(){
+	$("#colorStatus").hide();
+	$("#scopeStatus").hide();
+	$('#scopeBoxStatus').hide();
+	$("#inputFrame").css('cursor','default');
+	var c = document.getElementById('canvas').getContext('2d');
+	redraw(c,img);
+});
+
+//canvas mouse action handlers
+$('#canvas').click(function(e){
+	if($('#colorRadio').is(':checked')){
+		var pos = findPos(this,e);
+		var c = this.getContext('2d');
+		var hex = getHex(pos.x,pos.y,c);
+		//alert(hex);
+		$('.colorList').append(createColorListItem(hex));
+	}
+});
+
+$('#canvas').mousedown(function(e){
+	if($('#scopeRadio').is(':checked')){
+		$('#scopeBoxStatus').show();
+		oldPos = findPos(this,e);
+		$('#scopeBoxStatus').css({
+			left:e.pageX-70,
+			top:e.pageY-20
+		});
+	}
+});
+
+$('#canvas').mouseup(function(e){
+	if($('#scopeRadio').is(':checked')){
+		$('#scopeBoxStatus').hide();
+		oldPos = null;
+	}
+});
+
+$('#canvas').mousemove(function(e){
+	var c = this.getContext('2d');
+	if($('#noneRadio').is(':checked'))
+		$("#inputFrame").css('cursor','default');
+	else
+		$("#inputFrame").css('cursor','none');
+	if($('#colorRadio').is(':checked')){
+		$("#colorStatus").show();
+		$('#colorStatus').css({
+			left: e.pageX+15,
+			top: e.pageY +15
+		});
+		var pos = findPos(this,e);
+		var coord = "x=" + pos.x + ", y=" + pos.y;
+		
+		console.log(coord)
+		var hex = getHex(pos.x,pos.y,c);
+		//console.log(coord + "<br>" + hex);
+		$('#curColor').html(hex);
+		$('#colorPickerBox').css("background-color",hex);
+		redraw(c,img);
+		drawSmallCross(c,pos);
+	}
+	else if($('#scopeRadio').is(':checked')){
+		$("#scopeStatus").show();
+		$('#scopeStatus').css({
+			left: e.pageX+10,
+			top: e.pageY
+		});
+		var pos = findPos(this,e);
+		$('#scopeStatus').html(getCoord(pos));
+		redraw(c,img);
+		if(oldPos != null){
+			drawCrosshair(c,oldPos);
+			$('#scopeBoxStatus').html(updateBox(oldPos,pos));
+		}
+		drawCrosshair(c,pos);
+	}
+	else if($('#magRadio').is(':checked')){
+		redraw(c,img);
+		var pos = {x: e.pageX,y:e.pageY};
+		//magDraw(c,img,pos);
+		magDraw(c,img,findPos(this,e));
+	}
+});
+
+$('#canvas').mouseout(function(e){
+	$("#colorStatus").hide();
+	$("#scopeStatus").hide();
+	//$('#scopeBoxStatus').hide();
+	$("#inputFrame").css('cursor','default');
+	var c = document.getElementById('canvas').getContext('2d');
+	redraw(c,img);
+	//oldPos = null;
+});
+
+var oldPos = null;
+var img = draw("<%= "/images/" + @image.file_name %>");
+</script>

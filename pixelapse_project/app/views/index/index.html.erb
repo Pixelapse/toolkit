@@ -1,0 +1,71 @@
+<h1>Photo Upload</h1>
+<style type="text/css">
+	#dropzone {
+		border: 2px dashed #ccc;
+		width: 800px;
+		height: 600px;
+	}
+	#dropzone.hover { border:4px;}
+	#hiddenForm{
+		display:none;
+	}
+</style>
+
+<div id="dropzone">
+	Drop files here
+</div>
+<script type="text/javascript">
+function previewFile(file) {
+	var reader = new FileReader();
+	reader.onload = function(event) {
+		var image = new Image();
+		image.src = event.target.result;
+		image.width = 300;
+		dropzone.appendChild(image);
+	};
+	reader.readAsDataURL(file);
+}
+
+function readFile(file){
+	console.log("in readFile");
+	//debugger;
+	
+	if (acceptedTypes[file.type] != true) return;
+	var AUTH_TOKEN = $('meta[name=csrf-token]').attr('content');
+	var formData = new FormData();
+	formData.append('image',file);
+	formData.append('authenticity_token',AUTH_TOKEN);
+	previewFile(file);
+	
+	var xhr = new XMLHttpRequest();
+	xhr.open('POST','/image');
+	xhr.onload = function() {
+		progress.value = 100;
+	};
+	xhr.onreadystatechange = function(){
+		var resp = xhr.responseText;
+		if (!isNaN(resp))
+			window.location = "/image/" + resp
+	};
+	xhr.send(formData);
+}
+
+	var dropzone = document.getElementById('dropzone'),
+		acceptedTypes = {
+			'image/png': true,
+			'image/jpeg': true,
+			'image/gif': true
+		},
+		progress = document.getElementById('uploadProgress');
+	dropzone.ondragover= function(e){
+		e.preventDefault();
+	}
+	dropzone.ondrop = function (e) {
+		console.log("in onDrop")
+		
+		e.preventDefault();
+		if(e.dataTransfer.files)
+			readFile(e.dataTransfer.files[0]);
+	};
+	
+</script>
